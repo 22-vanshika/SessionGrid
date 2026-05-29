@@ -1,0 +1,378 @@
+{
+  "info": {
+    "name": "SessionGrid API",
+    "description": "Global Class Offering Booking System — teachers create courses and sessions, parents book them with full timezone support and race-condition-proof concurrency.\n\nAuth: Every protected route requires three headers:\n- x-user-id       UUID of the authenticated user\n- x-user-role     \"teacher\" or \"parent\"\n- x-user-timezone IANA timezone string, e.g. \"Asia/Kolkata\"",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_postman_id": "sessiongrid-v1"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000",
+      "type": "string",
+      "description": "Base URL of the running SessionGrid API server"
+    }
+  ],
+  "item": [
+    {
+      "name": "Users",
+      "description": "User registration and login. No auth headers required.",
+      "item": [
+        {
+          "name": "Register user",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/users/register",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "register"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"firstName\": \"Alice\",\n  \"lastName\": \"Smith\",\n  \"password\": \"secret123\",\n  \"role\": \"teacher\",\n  \"timezone\": \"Asia/Kolkata\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Register a new user (teacher or parent). Returns the created user without password.\n\nPossible role values: \"teacher\" | \"parent\"\nTimezone must be a valid IANA string, e.g. \"Asia/Kolkata\", \"America/New_York\", \"Europe/London\"."
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/users/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "login"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"alice@example.com\",\n  \"password\": \"secret123\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Validate credentials. Returns the user profile on success (200).\nReturns 401 if the email does not exist or the password is wrong."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Courses",
+      "description": "Create and list courses. Teacher role required.",
+      "item": [
+        {
+          "name": "Create course",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/courses",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              {
+                "key": "x-user-id",
+                "value": "<teacher-uuid>",
+                "description": "UUID of the authenticated teacher (from POST /users/register response)"
+              },
+              {
+                "key": "x-user-role",
+                "value": "teacher",
+                "description": "Must be \"teacher\" — only teachers can create courses"
+              },
+              {
+                "key": "x-user-timezone",
+                "value": "Asia/Kolkata",
+                "description": "IANA timezone string for the authenticated user"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Algebra I\",\n  \"description\": \"Introduction to algebra for grades 6–8\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Create a new course owned by the authenticated teacher.\ndescription is optional."
+          },
+          "response": []
+        },
+        {
+          "name": "List my courses",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/courses/mine",
+              "host": ["{{baseUrl}}"],
+              "path": ["courses", "mine"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "<teacher-uuid>",
+                "description": "UUID of the authenticated teacher"
+              },
+              {
+                "key": "x-user-role",
+                "value": "teacher",
+                "description": "Must be \"teacher\""
+              },
+              {
+                "key": "x-user-timezone",
+                "value": "Asia/Kolkata",
+                "description": "IANA timezone string"
+              }
+            ],
+            "description": "Returns all courses owned by the authenticated teacher, ordered by creation date descending."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Offerings",
+      "description": "Create and list offerings, and add sessions. All routes require auth headers.",
+      "item": [
+        {
+          "name": "Create offering",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/offerings",
+              "host": ["{{baseUrl}}"],
+              "path": ["offerings"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              {
+                "key": "x-user-id",
+                "value": "<teacher-uuid>",
+                "description": "UUID of the authenticated teacher"
+              },
+              {
+                "key": "x-user-role",
+                "value": "teacher",
+                "description": "Must be \"teacher\""
+              },
+              {
+                "key": "x-user-timezone",
+                "value": "Asia/Kolkata",
+                "description": "IANA timezone string"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"courseId\": \"<course-uuid>\",\n  \"capacity\": 20,\n  \"status\": \"published\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Create an offering under one of the teacher's courses.\n\nstatus values: \"draft\" | \"published\" | \"cancelled\" — defaults to \"draft\" if omitted.\nOnly published offerings can be booked by parents.\ncapacity must be at least 1."
+          },
+          "response": []
+        },
+        {
+          "name": "List published offerings",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/offerings",
+              "host": ["{{baseUrl}}"],
+              "path": ["offerings"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "<user-uuid>",
+                "description": "UUID of any authenticated user (teacher or parent)"
+              },
+              {
+                "key": "x-user-role",
+                "value": "parent",
+                "description": "\"teacher\" or \"parent\" — any role can browse published offerings"
+              },
+              {
+                "key": "x-user-timezone",
+                "value": "Asia/Kolkata",
+                "description": "Session times in the response will be converted to this timezone"
+              }
+            ],
+            "description": "Returns all published offerings with sessions. Session times (startsAt, endsAt) are converted to the caller's registered timezone with a UTC offset, e.g. \"2024-09-01T14:30:00+05:30\"."
+          },
+          "response": []
+        },
+        {
+          "name": "List my offerings",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/offerings/mine",
+              "host": ["{{baseUrl}}"],
+              "path": ["offerings", "mine"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "<teacher-uuid>",
+                "description": "UUID of the authenticated teacher"
+              },
+              {
+                "key": "x-user-role",
+                "value": "teacher",
+                "description": "Must be \"teacher\""
+              },
+              {
+                "key": "x-user-timezone",
+                "value": "Asia/Kolkata",
+                "description": "Session times will be converted to this timezone"
+              }
+            ],
+            "description": "Returns all offerings owned by the authenticated teacher (all statuses), with sessions in the teacher's timezone."
+          },
+          "response": []
+        },
+        {
+          "name": "Add session to offering",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/offerings/<offering-uuid>/sessions",
+              "host": ["{{baseUrl}}"],
+              "path": ["offerings", "<offering-uuid>", "sessions"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              {
+                "key": "x-user-id",
+                "value": "<teacher-uuid>",
+                "description": "UUID of the authenticated teacher who owns this offering"
+              },
+              {
+                "key": "x-user-role",
+                "value": "teacher",
+                "description": "Must be \"teacher\""
+              },
+              {
+                "key": "x-user-timezone",
+                "value": "Asia/Kolkata",
+                "description": "Times in the request body are interpreted in this timezone before UTC storage"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"startsAt\": \"2024-09-01T09:00:00\",\n  \"endsAt\": \"2024-09-01T10:00:00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Add a session to an offering. startsAt and endsAt are local ISO 8601 strings interpreted in the teacher's registered timezone (x-user-timezone). They are converted to UTC before storage.\n\nendsAt must be strictly after startsAt — returns 422 otherwise.\nReturns times as UTC ISO strings in the response."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Bookings",
+      "description": "Book offerings and manage bookings. Parent role required for creation and cancellation.",
+      "item": [
+        {
+          "name": "Book an offering",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{baseUrl}}/bookings",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings"]
+            },
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              {
+                "key": "x-user-id",
+                "value": "<parent-uuid>",
+                "description": "UUID of the authenticated parent"
+              },
+              {
+                "key": "x-user-role",
+                "value": "parent",
+                "description": "Must be \"parent\" — only parents can book"
+              },
+              {
+                "key": "x-user-timezone",
+                "value": "America/New_York",
+                "description": "IANA timezone string for the authenticated parent"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"offeringId\": \"<offering-uuid>\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "description": "Book a published offering. Returns 201 with the new booking on success.\n\nReturns 409 BOOKING_ALREADY_EXISTS if the parent has already booked this offering.\nReturns 409 BOOKING_CONFLICT if any session in this offering overlaps an existing booking.\nReturns 422 OFFERING_NOT_PUBLISHED if the offering is not published.\n\nUses SELECT ... FOR UPDATE to prevent race conditions under concurrent requests."
+          },
+          "response": []
+        },
+        {
+          "name": "List my bookings",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/bookings/mine",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "mine"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "<parent-uuid>",
+                "description": "UUID of the authenticated parent"
+              },
+              {
+                "key": "x-user-role",
+                "value": "parent",
+                "description": "Must be \"parent\""
+              },
+              {
+                "key": "x-user-timezone",
+                "value": "America/New_York",
+                "description": "Session times in the response will be converted to this timezone"
+              }
+            ],
+            "description": "Returns all bookings for the authenticated parent. Session times (startsAt, endsAt) are converted to the parent's timezone with a UTC offset."
+          },
+          "response": []
+        },
+        {
+          "name": "Cancel booking",
+          "request": {
+            "method": "PATCH",
+            "url": {
+              "raw": "{{baseUrl}}/bookings/<booking-uuid>/cancel",
+              "host": ["{{baseUrl}}"],
+              "path": ["bookings", "<booking-uuid>", "cancel"]
+            },
+            "header": [
+              {
+                "key": "x-user-id",
+                "value": "<parent-uuid>",
+                "description": "UUID of the authenticated parent who owns this booking"
+              },
+              {
+                "key": "x-user-role",
+                "value": "parent",
+                "description": "Must be \"parent\""
+              },
+              {
+                "key": "x-user-timezone",
+                "value": "America/New_York",
+                "description": "IANA timezone string"
+              }
+            ],
+            "description": "Cancel a booking. Idempotent — cancelling an already-cancelled booking returns 200 with no error.\n\nReturns 403 if the booking belongs to a different parent.\nReturns 404 if the booking does not exist."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,4 +1,10 @@
 import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import {
+  ApiHeader,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { OfferingsService } from './offerings.service';
 import { MockAuthGuard } from '../common/guards/mock-auth.guard';
 import { CurrentUser, AuthenticatedUser } from '../common/decorators/current-user.decorator';
@@ -8,12 +14,22 @@ import {
   OfferingWithSessionsResponseDto,
 } from './dto/offering-response.dto';
 
+@ApiTags('Offerings')
+@ApiHeader({ name: 'x-user-id', required: true, description: 'UUID of the authenticated user' })
+@ApiHeader({ name: 'x-user-role', required: true, description: '"teacher" or "parent"' })
+@ApiHeader({ name: 'x-user-timezone', required: true, description: 'IANA timezone string, e.g. Asia/Kolkata' })
 @Controller('offerings')
 @UseGuards(MockAuthGuard)
 export class OfferingsController {
   constructor(private readonly offeringsService: OfferingsService) {}
 
   @Post()
+  @ApiOperation({ summary: 'Create an offering under one of the teacher\'s courses' })
+  @ApiResponse({ status: 201, description: 'Offering created', type: OfferingResponseDto })
+  @ApiResponse({ status: 400, description: 'Validation error' })
+  @ApiResponse({ status: 401, description: 'Missing auth headers' })
+  @ApiResponse({ status: 403, description: 'Caller is not a teacher or does not own the course' })
+  @ApiResponse({ status: 404, description: 'Course not found' })
   async create(
     @Body() dto: CreateOfferingDto,
     @CurrentUser() currentUser: AuthenticatedUser,
@@ -26,8 +42,16 @@ export class OfferingsController {
     return OfferingResponseDto.fromEntity(offering);
   }
 
-  // GET /offerings — all published offerings with sessions in the caller's timezone.
   @Get()
+  @ApiOperation({
+    summary: 'List all published offerings with sessions in the caller\'s timezone',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Published offerings with localised session times',
+    type: [OfferingWithSessionsResponseDto],
+  })
+  @ApiResponse({ status: 401, description: 'Missing auth headers' })
   async findAllPublished(
     @CurrentUser() currentUser: AuthenticatedUser,
   ): Promise<OfferingWithSessionsResponseDto[]> {
@@ -35,8 +59,16 @@ export class OfferingsController {
     return offerings.map(OfferingWithSessionsResponseDto.fromLocalised);
   }
 
-  // GET /offerings/mine — teacher's own offerings with sessions in the teacher's timezone.
   @Get('mine')
+  @ApiOperation({
+    summary: "List the teacher's own offerings with sessions in the teacher's timezone",
+  })
+  @ApiResponse({
+    status: 200,
+    description: "Teacher's offerings with localised session times",
+    type: [OfferingWithSessionsResponseDto],
+  })
+  @ApiResponse({ status: 401, description: 'Missing auth headers' })
   async findMine(
     @CurrentUser() currentUser: AuthenticatedUser,
   ): Promise<OfferingWithSessionsResponseDto[]> {

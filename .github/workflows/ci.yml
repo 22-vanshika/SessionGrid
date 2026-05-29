@@ -1,0 +1,74 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    # -------------------------------------------------------------------------
+    # PostgreSQL service container — matches docker-compose.yml (postgres:16-alpine)
+    # and the credentials in .env.example.
+    # -------------------------------------------------------------------------
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: sessiongrid
+          POSTGRES_PASSWORD: changeme
+          POSTGRES_DB: sessiongrid
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U sessiongrid -d sessiongrid"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    # -------------------------------------------------------------------------
+    # Environment — every variable from .env.example, safe for CI.
+    # Sensitive values (JWT_SECRET) are intentionally non-production strings.
+    # -------------------------------------------------------------------------
+    env:
+      NODE_ENV: test
+      APP_PORT: 3000
+      DB_HOST: localhost
+      DB_PORT: 5432
+      DB_USERNAME: sessiongrid
+      DB_PASSWORD: changeme
+      DB_NAME: sessiongrid
+      JWT_SECRET: ci-test-jwt-secret-not-for-production
+      JWT_EXPIRES_IN: 7d
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Build first — catches TypeScript compile errors before running any tests.
+      - name: Build
+        run: npm run build
+
+      # Unit tests do not need the database.
+      - name: Unit tests
+        run: npm test
+
+      # Migrations must run before the e2e suite so the schema exists.
+      - name: Run database migrations
+        run: npm run migration:run
+
+      # E2e tests fire real HTTP requests against a real PostgreSQL database.
+      - name: E2e tests
+        run: npm run test:e2e

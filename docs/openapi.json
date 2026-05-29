@@ -1,0 +1,1291 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/users/register": {
+      "post": {
+        "operationId": "UsersController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "409": {
+            "description": "Email already registered"
+          }
+        },
+        "summary": "Register a new user (teacher or parent)",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/users/login": {
+      "post": {
+        "operationId": "UsersController_login",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Invalid email or password"
+          }
+        },
+        "summary": "Validate credentials and return the user profile",
+        "tags": [
+          "Users"
+        ]
+      }
+    },
+    "/courses": {
+      "post": {
+        "operationId": "CoursesController_create",
+        "parameters": [
+          {
+            "name": "x-user-timezone",
+            "in": "header",
+            "description": "IANA timezone string, e.g. Asia/Kolkata",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "description": "\"teacher\" or \"parent\"",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "UUID of the authenticated user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCourseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Course created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CourseResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Missing auth headers"
+          },
+          "403": {
+            "description": "Caller is not a teacher"
+          }
+        },
+        "summary": "Create a course (teacher only)",
+        "tags": [
+          "Courses"
+        ]
+      }
+    },
+    "/courses/mine": {
+      "get": {
+        "operationId": "CoursesController_findMine",
+        "parameters": [
+          {
+            "name": "x-user-timezone",
+            "in": "header",
+            "description": "IANA timezone string, e.g. Asia/Kolkata",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "description": "\"teacher\" or \"parent\"",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "UUID of the authenticated user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of courses",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/CourseResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing auth headers"
+          },
+          "403": {
+            "description": "Caller is not a teacher"
+          }
+        },
+        "summary": "List the caller's courses (teacher only)",
+        "tags": [
+          "Courses"
+        ]
+      }
+    },
+    "/offerings": {
+      "post": {
+        "operationId": "OfferingsController_create",
+        "parameters": [
+          {
+            "name": "x-user-timezone",
+            "in": "header",
+            "description": "IANA timezone string, e.g. Asia/Kolkata",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "description": "\"teacher\" or \"parent\"",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "UUID of the authenticated user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOfferingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Offering created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OfferingResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Missing auth headers"
+          },
+          "403": {
+            "description": "Caller is not a teacher or does not own the course"
+          },
+          "404": {
+            "description": "Course not found"
+          }
+        },
+        "summary": "Create an offering under one of the teacher's courses",
+        "tags": [
+          "Offerings"
+        ]
+      },
+      "get": {
+        "operationId": "OfferingsController_findAllPublished",
+        "parameters": [
+          {
+            "name": "x-user-timezone",
+            "in": "header",
+            "description": "IANA timezone string, e.g. Asia/Kolkata",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "description": "\"teacher\" or \"parent\"",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "UUID of the authenticated user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Published offerings with localised session times",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OfferingWithSessionsResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing auth headers"
+          }
+        },
+        "summary": "List all published offerings with sessions in the caller's timezone",
+        "tags": [
+          "Offerings"
+        ]
+      }
+    },
+    "/offerings/mine": {
+      "get": {
+        "operationId": "OfferingsController_findMine",
+        "parameters": [
+          {
+            "name": "x-user-timezone",
+            "in": "header",
+            "description": "IANA timezone string, e.g. Asia/Kolkata",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "description": "\"teacher\" or \"parent\"",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "UUID of the authenticated user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Teacher's offerings with localised session times",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/OfferingWithSessionsResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing auth headers"
+          }
+        },
+        "summary": "List the teacher's own offerings with sessions in the teacher's timezone",
+        "tags": [
+          "Offerings"
+        ]
+      }
+    },
+    "/offerings/{offeringId}/sessions": {
+      "post": {
+        "operationId": "SessionsController_addSession",
+        "parameters": [
+          {
+            "name": "x-user-timezone",
+            "in": "header",
+            "description": "IANA timezone string, e.g. Asia/Kolkata",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "description": "\"teacher\" or \"parent\"",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "UUID of the authenticated user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offeringId",
+            "required": true,
+            "in": "path",
+            "description": "ID of the offering",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddSessionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Session created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error or end time before start time"
+          },
+          "401": {
+            "description": "Missing auth headers"
+          },
+          "403": {
+            "description": "Caller is not a teacher or does not own the offering"
+          },
+          "404": {
+            "description": "Offering not found"
+          }
+        },
+        "summary": "Add a session to an offering (times interpreted in teacher's timezone)",
+        "tags": [
+          "Offerings"
+        ]
+      }
+    },
+    "/bookings": {
+      "post": {
+        "operationId": "BookingsController_create",
+        "parameters": [
+          {
+            "name": "x-user-timezone",
+            "in": "header",
+            "description": "IANA timezone string, e.g. Asia/Kolkata",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "description": "\"teacher\" or \"parent\"",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "UUID of the authenticated user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBookingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Booking confirmed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BookingResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error"
+          },
+          "401": {
+            "description": "Missing auth headers"
+          },
+          "403": {
+            "description": "Caller is not a parent"
+          },
+          "404": {
+            "description": "Offering not found"
+          },
+          "409": {
+            "description": "Duplicate booking or session time conflict"
+          },
+          "422": {
+            "description": "Offering is not published"
+          }
+        },
+        "summary": "Book a published offering (parent only)",
+        "tags": [
+          "Bookings"
+        ]
+      }
+    },
+    "/bookings/mine": {
+      "get": {
+        "operationId": "BookingsController_findMine",
+        "parameters": [
+          {
+            "name": "x-user-timezone",
+            "in": "header",
+            "description": "IANA timezone string, e.g. Asia/Kolkata",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "description": "\"teacher\" or \"parent\"",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "UUID of the authenticated user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Parent's bookings with localised session times",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/BookingWithOfferingResponseDto"
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing auth headers"
+          }
+        },
+        "summary": "List the parent's bookings with sessions in the parent's timezone",
+        "tags": [
+          "Bookings"
+        ]
+      }
+    },
+    "/bookings/{id}/cancel": {
+      "patch": {
+        "operationId": "BookingsController_cancel",
+        "parameters": [
+          {
+            "name": "x-user-timezone",
+            "in": "header",
+            "description": "IANA timezone string, e.g. Asia/Kolkata",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-role",
+            "in": "header",
+            "description": "\"teacher\" or \"parent\"",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "UUID of the authenticated user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "ID of the booking to cancel",
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Booking cancelled (or was already cancelled)"
+          },
+          "401": {
+            "description": "Missing auth headers"
+          },
+          "403": {
+            "description": "Booking does not belong to the caller"
+          },
+          "404": {
+            "description": "Booking not found"
+          }
+        },
+        "summary": "Cancel a booking (parent only, idempotent)",
+        "tags": [
+          "Bookings"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "SessionGrid API",
+    "description": "Global Class Offering Booking System — teachers create courses and sessions, parents book them with full timezone support and race-condition-proof concurrency.",
+    "version": "1.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "x-user-id": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-user-id"
+      },
+      "x-user-role": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-user-role"
+      },
+      "x-user-timezone": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "x-user-timezone"
+      }
+    },
+    "schemas": {
+      "RegisterUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "alice@example.com"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Alice"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Smith"
+          },
+          "password": {
+            "type": "string",
+            "example": "secret123",
+            "minLength": 8
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "teacher",
+              "parent"
+            ],
+            "example": "teacher"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Kolkata",
+            "description": "IANA timezone string used for all time conversions"
+          }
+        },
+        "required": [
+          "email",
+          "firstName",
+          "lastName",
+          "password",
+          "role",
+          "timezone"
+        ]
+      },
+      "UserResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "3f9e0c8d-6ce8-492f-99c9-76fb3b0c62aa"
+          },
+          "email": {
+            "type": "string",
+            "example": "alice@example.com"
+          },
+          "firstName": {
+            "type": "string",
+            "example": "Alice"
+          },
+          "lastName": {
+            "type": "string",
+            "example": "Smith"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "teacher",
+              "parent"
+            ],
+            "example": "teacher"
+          },
+          "timezone": {
+            "type": "string",
+            "example": "Asia/Kolkata"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "email",
+          "firstName",
+          "lastName",
+          "role",
+          "timezone",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "LoginUserDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "example": "alice@example.com"
+          },
+          "password": {
+            "type": "string",
+            "example": "secret123"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "CreateCourseDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "example": "Algebra I"
+          },
+          "description": {
+            "type": "string",
+            "example": "Introduction to algebra for grades 6–8"
+          }
+        },
+        "required": [
+          "title"
+        ]
+      },
+      "CourseResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          },
+          "teacherId": {
+            "type": "string",
+            "example": "3f9e0c8d-6ce8-492f-99c9-76fb3b0c62aa"
+          },
+          "title": {
+            "type": "string",
+            "example": "Algebra I"
+          },
+          "description": {
+            "type": "object",
+            "example": "Introduction to algebra",
+            "nullable": true
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "teacherId",
+          "title",
+          "description",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateOfferingDto": {
+        "type": "object",
+        "properties": {
+          "courseId": {
+            "type": "string",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+            "format": "uuid"
+          },
+          "capacity": {
+            "type": "number",
+            "example": 20,
+            "minimum": 1
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "cancelled"
+            ],
+            "example": "published",
+            "description": "Defaults to draft if omitted"
+          }
+        },
+        "required": [
+          "courseId",
+          "capacity"
+        ]
+      },
+      "OfferingResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "c3d4e5f6-a7b8-9012-cdef-123456789012"
+          },
+          "courseId": {
+            "type": "string",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          },
+          "capacity": {
+            "type": "number",
+            "example": 20
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "cancelled"
+            ],
+            "example": "draft"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "courseId",
+          "capacity",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CourseInOfferingDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          },
+          "teacherId": {
+            "type": "string",
+            "example": "3f9e0c8d-6ce8-492f-99c9-76fb3b0c62aa"
+          },
+          "title": {
+            "type": "string",
+            "example": "Algebra I"
+          },
+          "description": {
+            "type": "object",
+            "example": "Introduction to algebra",
+            "nullable": true
+          }
+        },
+        "required": [
+          "id",
+          "teacherId",
+          "title",
+          "description"
+        ]
+      },
+      "SessionInOfferingDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+          },
+          "offeringId": {
+            "type": "string",
+            "example": "c3d4e5f6-a7b8-9012-cdef-123456789012"
+          },
+          "startsAt": {
+            "type": "string",
+            "example": "2024-09-01T14:30:00+05:30",
+            "description": "Local ISO 8601 with UTC offset in the requesting user's timezone"
+          },
+          "endsAt": {
+            "type": "string",
+            "example": "2024-09-01T15:30:00+05:30"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "offeringId",
+          "startsAt",
+          "endsAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "OfferingWithSessionsResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "c3d4e5f6-a7b8-9012-cdef-123456789012"
+          },
+          "courseId": {
+            "type": "string",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          },
+          "capacity": {
+            "type": "number",
+            "example": 20
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "cancelled"
+            ],
+            "example": "published"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          },
+          "course": {
+            "$ref": "#/components/schemas/CourseInOfferingDto"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionInOfferingDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "courseId",
+          "capacity",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "course",
+          "sessions"
+        ]
+      },
+      "AddSessionDto": {
+        "type": "object",
+        "properties": {
+          "startsAt": {
+            "type": "string",
+            "example": "2024-09-01T09:00:00",
+            "description": "Local ISO 8601 datetime string interpreted in the teacher's registered timezone"
+          },
+          "endsAt": {
+            "type": "string",
+            "example": "2024-09-01T10:00:00",
+            "description": "Must be strictly after startsAt"
+          }
+        },
+        "required": [
+          "startsAt",
+          "endsAt"
+        ]
+      },
+      "SessionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+          },
+          "offeringId": {
+            "type": "string",
+            "example": "c3d4e5f6-a7b8-9012-cdef-123456789012"
+          },
+          "startsAt": {
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z",
+            "description": "UTC ISO 8601 string"
+          },
+          "endsAt": {
+            "type": "string",
+            "example": "2024-09-01T10:00:00.000Z"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "offeringId",
+          "startsAt",
+          "endsAt",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "CreateBookingDto": {
+        "type": "object",
+        "properties": {
+          "offeringId": {
+            "type": "string",
+            "example": "c3d4e5f6-a7b8-9012-cdef-123456789012",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "offeringId"
+        ]
+      },
+      "BookingResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "d4e5f6a7-b8c9-0123-def0-123456789012"
+          },
+          "offeringId": {
+            "type": "string",
+            "example": "c3d4e5f6-a7b8-9012-cdef-123456789012"
+          },
+          "parentId": {
+            "type": "string",
+            "example": "3f9e0c8d-6ce8-492f-99c9-76fb3b0c62aa"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "cancelled"
+            ],
+            "example": "confirmed"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          }
+        },
+        "required": [
+          "id",
+          "offeringId",
+          "parentId",
+          "status",
+          "createdAt",
+          "updatedAt"
+        ]
+      },
+      "BookingSessionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "b2c3d4e5-f6a7-8901-bcde-f12345678901"
+          },
+          "offeringId": {
+            "type": "string",
+            "example": "c3d4e5f6-a7b8-9012-cdef-123456789012"
+          },
+          "startsAt": {
+            "type": "string",
+            "example": "2024-09-01T14:30:00+05:30"
+          },
+          "endsAt": {
+            "type": "string",
+            "example": "2024-09-01T15:30:00+05:30"
+          }
+        },
+        "required": [
+          "id",
+          "offeringId",
+          "startsAt",
+          "endsAt"
+        ]
+      },
+      "BookingOfferingDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "c3d4e5f6-a7b8-9012-cdef-123456789012"
+          },
+          "courseId": {
+            "type": "string",
+            "example": "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
+          },
+          "capacity": {
+            "type": "number",
+            "example": 20
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "published",
+              "cancelled"
+            ],
+            "example": "published"
+          },
+          "sessions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookingSessionDto"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "courseId",
+          "capacity",
+          "status",
+          "sessions"
+        ]
+      },
+      "BookingWithOfferingResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "d4e5f6a7-b8c9-0123-def0-123456789012"
+          },
+          "offeringId": {
+            "type": "string",
+            "example": "c3d4e5f6-a7b8-9012-cdef-123456789012"
+          },
+          "parentId": {
+            "type": "string",
+            "example": "3f9e0c8d-6ce8-492f-99c9-76fb3b0c62aa"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "cancelled"
+            ],
+            "example": "confirmed"
+          },
+          "createdAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          },
+          "updatedAt": {
+            "format": "date-time",
+            "type": "string",
+            "example": "2024-09-01T09:00:00.000Z"
+          },
+          "offering": {
+            "$ref": "#/components/schemas/BookingOfferingDto"
+          }
+        },
+        "required": [
+          "id",
+          "offeringId",
+          "parentId",
+          "status",
+          "createdAt",
+          "updatedAt",
+          "offering"
+        ]
+      }
+    }
+  }
+}

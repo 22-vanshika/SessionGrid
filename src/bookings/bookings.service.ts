@@ -11,7 +11,6 @@ import { Booking, BookingStatus } from './entities/booking.entity';
 import { BookingsRepository } from './bookings.repository';
 import { BookingAlreadyExistsException } from '../common/exceptions/booking-already-exists.exception';
 import { BookingConflictException } from '../common/exceptions/booking-conflict.exception';
-import { BookingNotFoundException } from '../common/exceptions/booking-not-found.exception';
 import { ForbiddenBookingAccessException } from '../common/exceptions/forbidden-booking-access.exception';
 import { NotAParentException } from '../common/exceptions/not-a-parent.exception';
 import { OfferingNotPublishedException } from '../common/exceptions/offering-not-published.exception';
@@ -64,15 +63,12 @@ export class BookingsService {
   async cancelBooking(bookingId: string, parentId: string): Promise<void> {
     const booking = await this.bookingsRepository.findById(bookingId);
     if (!booking) {
-      throw new BookingNotFoundException(bookingId);
+      return; // idempotent — row was already deleted by a previous cancel
     }
     if (booking.parentId !== parentId) {
       throw new ForbiddenBookingAccessException();
     }
-    if (booking.status === BookingStatus.CANCELLED) {
-      return; // idempotent — already cancelled
-    }
-    await this.bookingsRepository.updateStatus(bookingId, BookingStatus.CANCELLED);
+    await this.bookingsRepository.deleteById(bookingId);
   }
 
   private async assertParentRole(parentId: string): Promise<void> {

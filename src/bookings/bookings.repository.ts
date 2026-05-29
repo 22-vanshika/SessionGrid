@@ -41,6 +41,10 @@ export class BookingsRepository {
       .update({ id }, { status });
   }
 
+  async deleteById(id: string): Promise<void> {
+    await this.dataSource.getRepository(Booking).delete({ id });
+  }
+
   // Acquires a pessimistic write lock (SELECT … FOR UPDATE) on every confirmed
   // booking row belonging to this parent. Any concurrent transaction that tries
   // to read or modify those rows will block until this transaction commits,

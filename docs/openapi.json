@@ -451,7 +451,7 @@
             }
           },
           "400": {
-            "description": "Validation error or end time before start time"
+            "description": "Validation error or invalid datetime format"
           },
           "401": {
             "description": "Missing auth headers"
@@ -461,6 +461,9 @@
           },
           "404": {
             "description": "Offering not found"
+          },
+          "422": {
+            "description": "Session end time before start time, or session is too far in the past"
           }
         },
         "summary": "Add a session to an offering (times interpreted in teacher's timezone)",

@@ -6,7 +6,6 @@ import {
   ManyToOne,
   PrimaryGeneratedColumn,
   Relation,
-  Unique,
   UpdateDateColumn,
 } from 'typeorm';
 import { Offering } from '../../offerings/entities/offering.entity';
@@ -18,9 +17,9 @@ export enum BookingStatus {
 }
 
 // A parent may hold at most one active booking per offering.
-// The unique constraint is enforced at the database level — application checks alone are insufficient.
+// This is enforced at the database level via a partial unique index:
+// UQ_bookings_offering_id_parent_id_confirmed ON bookings(offering_id, parent_id) WHERE status = 'confirmed'
 @Entity('bookings')
-@Unique('UQ_bookings_offering_id_parent_id', ['offeringId', 'parentId'])
 export class Booking {
   @PrimaryGeneratedColumn('uuid')
   id: string;

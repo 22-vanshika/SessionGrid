@@ -14,7 +14,9 @@ import {
   INestApplication,
   ValidationPipe,
 } from '@nestjs/common';
-import * as request from 'supertest';
+import * as supertest from 'supertest';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const request = supertest as any;
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { GlobalExceptionFilter } from '../src/common/filters/global-exception.filter';
@@ -138,7 +140,7 @@ async function addSession(
 async function bookOffering(
   parentHeaders: UserHeaders,
   offeringId: string,
-): Promise<request.Response> {
+): Promise<supertest.Response> {
   return request(app.getHttpServer())
     .post('/bookings')
     .set(parentHeaders)
@@ -299,5 +301,116 @@ describe('concurrency — SELECT FOR UPDATE proof', () => {
     // booking or any other error — proving the locking strategy is correct.
     const failedRes = resA.status === 409 ? resA : resB;
     expect((failedRes.body as { error: string }).error).toBe('BOOKING_CONFLICT');
+  }, 15_000);
+});
+
+// ---------------------------------------------------------------------------
+// Test 5 — Audited edge case fixes & concurrency enhancements
+// ---------------------------------------------------------------------------
+
+describe('audited edge cases and enhancements', () => {
+  it('rejects whitespace-only description in course creation', async () => {
+    const teacher = await registerUser('teacher.trim@test.com', 'teacher', 'UTC');
+    const res = await request(app.getHttpServer())
+      .post('/courses')
+      .set(teacher.headers)
+      .send({ title: 'Trim Course', description: '    ' });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('VALIDATION_ERROR');
+  });
+
+  it('rejects all-whitespace password in user registration', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/users/register')
+      .send({
+        email: 'badpw@test.com',
+        firstName: 'Bad',
+        lastName: 'PW',
+        password: '        ', // 8 spaces
+        role: 'parent',
+        timezone: 'UTC',
+      });
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('VALIDATION_ERROR');
+  });
+
+  it('returns 400 Bad Request for calendar-wise invalid dates instead of 500', async () => {
+    const teacher = await registerUser('teacher.invaliddate@test.com', 'teacher', 'UTC');
+    const courseId = await createCourse(teacher.headers);
+    const offeringId = await createOffering(teacher.headers, courseId);
+
+    const res = await request(app.getHttpServer())
+      .post(`/offerings/${offeringId}/sessions`)
+      .set(teacher.headers)
+      .send({ startsAt: '2024-02-30T10:00:00', endsAt: '2024-02-30T11:00:00' }); // Feb 30th is invalid!
+
+    expect(res.status).toBe(400);
+    expect(res.body.error).toBe('INVALID_DATE_TIME');
+  });
+
+  it('soft-cancels bookings and allows re-booking the same offering', async () => {
+    const teacher = await registerUser('teacher.soft@test.com', 'teacher', 'UTC');
+    const courseId = await createCourse(teacher.headers);
+    const offeringId = await createOffering(teacher.headers, courseId);
+    await addSession(teacher.headers, offeringId, '2024-09-01T09:00:00', '2024-09-01T10:00:00');
+
+    const parent = await registerUser('parent.soft@test.com', 'parent', 'UTC');
+
+    // 1. Create a booking.
+    const bookRes = await bookOffering(parent.headers, offeringId);
+    expect(bookRes.status).toBe(201);
+    const bookingId = bookRes.body.id;
+
+    // 2. Cancel the booking (idempotently).
+    const cancelRes = await request(app.getHttpServer())
+      .patch(`/bookings/${bookingId}/cancel`)
+      .set(parent.headers);
+    expect(cancelRes.status).toBe(200);
+
+    // 3. Verify it is still listed under GET /bookings/mine but with CANCELLED status.
+    const mineRes = await request(app.getHttpServer())
+      .get('/bookings/mine')
+      .set(parent.headers)
+      .expect(200);
+    expect(mineRes.body).toHaveLength(1);
+    expect(mineRes.body[0].status).toBe('cancelled');
+
+    // 4. Re-book the same offering — must succeed because the active booking was cancelled!
+    const rebookRes = await bookOffering(parent.headers, offeringId);
+    expect(rebookRes.status).toBe(201);
+  });
+
+  it('prevents over-booking under concurrency for offering of capacity 1', async () => {
+    const teacher = await registerUser('teacher.capacitycon@test.com', 'teacher', 'UTC');
+    const courseId = await createCourse(teacher.headers);
+    
+    // Create an offering with capacity: 1.
+    const res = await request(app.getHttpServer())
+      .post('/offerings')
+      .set(teacher.headers)
+      .send({ courseId, capacity: 1, status: 'published' })
+      .expect(201);
+    const offeringId = res.body.id;
+
+    await addSession(teacher.headers, offeringId, '2024-09-01T09:00:00', '2024-09-01T10:00:00');
+
+    const parent1 = await registerUser('parent1@test.com', 'parent', 'UTC');
+    const parent2 = await registerUser('parent2@test.com', 'parent', 'UTC');
+
+    // Fire both bookings concurrently for different parents.
+    const [res1, res2] = await Promise.all([
+      bookOffering(parent1.headers, offeringId),
+      bookOffering(parent2.headers, offeringId),
+    ]);
+
+    const statuses = [res1.status, res2.status].sort();
+
+    // Exactly one wins (201) and the second is rejected with 422 OFFERING_FULL.
+    expect(statuses).toEqual([201, 422]);
+
+    const failedRes = res1.status === 422 ? res1 : res2;
+    expect((failedRes.body as { error: string }).error).toBe('OFFERING_FULL');
   }, 15_000);
 });

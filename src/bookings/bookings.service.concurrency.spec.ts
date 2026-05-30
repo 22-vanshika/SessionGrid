@@ -119,6 +119,7 @@ describe('BookingsService — concurrency simulation', () => {
     // -----------------------------------------------------------------------
 
     const mockBookingsRepo = {
+      lockOffering: jest.fn().mockResolvedValue(undefined),
       // Returns every committed booking belonging to the parent — simulates the
       // rows that would be locked by SELECT … FOR UPDATE.
       lockParentBookings: jest.fn().mockImplementation(() => {

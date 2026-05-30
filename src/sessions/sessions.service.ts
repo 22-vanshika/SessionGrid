@@ -9,6 +9,7 @@ import { NotATeacherException } from '../common/exceptions/not-a-teacher.excepti
 import { OfferingAccessForbiddenException } from '../common/exceptions/offering-access-forbidden.exception';
 import { SessionInPastException } from '../common/exceptions/session-in-past.exception';
 import { SessionTimeInvalidException } from '../common/exceptions/session-time-invalid.exception';
+import { InvalidDateTimeException } from '../common/exceptions/invalid-date-time.exception';
 
 export interface LocalisedSessionResult {
   id: string;
@@ -53,8 +54,14 @@ export class SessionsService {
       throw new OfferingAccessForbiddenException(offeringId);
     }
 
-    const startsAt = toUTC(localStartsAt, teacherTimezone);
-    const endsAt = toUTC(localEndsAt, teacherTimezone);
+    let startsAt: Date;
+    let endsAt: Date;
+    try {
+      startsAt = toUTC(localStartsAt, teacherTimezone);
+      endsAt = toUTC(localEndsAt, teacherTimezone);
+    } catch (err) {
+      throw new InvalidDateTimeException(err instanceof Error ? err.message : undefined);
+    }
 
     // The DB enforces this via CHK_sessions_ends_after_starts, but catching it
     // here provides a meaningful error message before hitting the constraint.

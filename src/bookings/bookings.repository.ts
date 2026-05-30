@@ -118,4 +118,14 @@ export class BookingsRepository {
       )
       .getMany();
   }
+
+  // Acquires a pessimistic write lock (SELECT … FOR UPDATE) on the offering row.
+  // This prevents concurrent bookings from checking and modifying the offering capacity
+  // simultaneously, eliminating over-booking concurrency bugs.
+  async lockOffering(offeringId: string, manager: EntityManager): Promise<void> {
+    await manager.query(
+      'SELECT 1 FROM offerings WHERE id = $1 FOR UPDATE',
+      [offeringId],
+    );
+  }
 }

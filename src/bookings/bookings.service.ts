@@ -72,7 +72,7 @@ export class BookingsService {
     if (booking.parentId !== parentId) {
       throw new ForbiddenBookingAccessException();
     }
-    await this.bookingsRepository.deleteById(bookingId);
+    await this.bookingsRepository.updateStatus(bookingId, BookingStatus.CANCELLED);
   }
 
   private async assertParentRole(parentId: string): Promise<void> {
@@ -111,6 +111,8 @@ export class BookingsService {
     capacity: number,
   ): Promise<Booking> {
     return this.dataSource.transaction(async (manager: EntityManager) => {
+      await this.bookingsRepository.lockOffering(offeringId, manager);
+
       const existingBookings = await this.bookingsRepository.lockParentBookings(
         parentId,
         manager,

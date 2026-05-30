@@ -92,6 +92,7 @@ type MockBookingsRepository = jest.Mocked<
     | 'deleteById'
     | 'findByParentId'
     | 'updateStatus'
+    | 'lockOffering'
   >
 >;
 
@@ -104,6 +105,7 @@ const buildMockBookingsRepository = (): MockBookingsRepository => ({
   deleteById: jest.fn(),
   findByParentId: jest.fn(),
   updateStatus: jest.fn(),
+  lockOffering: jest.fn(),
 });
 
 // ---------------------------------------------------------------------------
@@ -157,6 +159,7 @@ describe('BookingsService.bookOffering', () => {
     service = module.get<BookingsService>(BookingsService);
 
     // Repository happy-path defaults.
+    mockBookingsRepo.lockOffering.mockResolvedValue(undefined);
     mockBookingsRepo.lockParentBookings.mockResolvedValue([]);
     mockBookingsRepo.findConflictingSessions.mockResolvedValue([]);
     mockBookingsRepo.countConfirmedByOfferingId.mockResolvedValue(0);
@@ -327,12 +330,12 @@ describe('BookingsService.cancelBooking', () => {
     );
   });
 
-  it('calls deleteById when the booking belongs to the authenticated parent', async () => {
+  it('calls updateStatus when the booking belongs to the authenticated parent', async () => {
     mockBookingsRepo.findById.mockResolvedValue(savedBooking);
-    mockBookingsRepo.deleteById.mockResolvedValue(undefined);
+    mockBookingsRepo.updateStatus.mockResolvedValue(undefined);
 
     await service.cancelBooking(BOOKING_ID, PARENT_ID);
 
-    expect(mockBookingsRepo.deleteById).toHaveBeenCalledWith(BOOKING_ID);
+    expect(mockBookingsRepo.updateStatus).toHaveBeenCalledWith(BOOKING_ID, BookingStatus.CANCELLED);
   });
 });

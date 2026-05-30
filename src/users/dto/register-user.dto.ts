@@ -6,6 +6,7 @@ import {
   IsTimeZone,
   MaxLength,
   MinLength,
+  Matches,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
@@ -38,6 +39,7 @@ export class RegisterUserDto {
   @IsString()
   @MinLength(8)
   @MaxLength(128)
+  @Matches(/\S/, { message: 'Password must not consist only of spaces' })
   password: string;
 
   @ApiProperty({ enum: UserRole, example: UserRole.TEACHER })

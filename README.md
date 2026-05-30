@@ -4,6 +4,9 @@
 > classes and parents book spots — and the system guarantees no two parents can ever
 > accidentally get the same slot at the same time.
 
+🚀 **Live Production API**: [https://sessiongrid-api.onrender.com](https://sessiongrid-api.onrender.com)  
+📖 **Interactive Swagger UI**: [https://sessiongrid-api.onrender.com/api/docs](https://sessiongrid-api.onrender.com/api/docs)
+
 ---
 
 ## 1. What Is SessionGrid?
@@ -406,5 +409,19 @@ Two ready-to-use files live in the `docs/` folder:
 
 - **`docs/sessiongrid.postman_collection.json`** — Import directly into
   [Postman](https://www.postman.com/). Gives you 11 pre-built requests in 4 folders
-  (Users, Courses, Offerings, Bookings) — point them at `http://localhost:3000` and
-  run immediately.
+  (Users, Courses, Offerings, Bookings) — pre-configured to point directly to your live production server (`https://sessiongrid-api.onrender.com`). You can toggle the `baseUrl` collection variable to `http://localhost:3000` to test against your local server instead.
+
+---
+
+## 14. Live Cloud Deployment (Render) 🚀
+
+SessionGrid is fully deployed, configured, and running live in the cloud.
+
+* **Live API Base URL**: `https://sessiongrid-api.onrender.com`
+* **Interactive API Documentation (Swagger)**: `https://sessiongrid-api.onrender.com/api/docs`
+
+### **Production Infrastructure Architecture:**
+* **Web Service**: Node.js/NestJS hosted on Render. Uses dynamic peer dependency checks and production-safe migrations compiled directly to native JavaScript.
+* **Database**: Managed PostgreSQL instance (v16) hosted on Render. Supports unified secure `DATABASE_URL` connections, preventing connection leaks.
+* **Continuous Integration**: Managed via GitHub actions and auto-deployed directly to Render on every push to the `main` branch.
+

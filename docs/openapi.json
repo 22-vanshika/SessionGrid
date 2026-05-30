@@ -4,6 +4,7 @@
     "/users/register": {
       "post": {
         "operationId": "UsersController_register",
+        "summary": "Register a new user (teacher or parent)",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -33,7 +34,6 @@
             "description": "Email already registered"
           }
         },
-        "summary": "Register a new user (teacher or parent)",
         "tags": [
           "Users"
         ]
@@ -42,6 +42,7 @@
     "/users/login": {
       "post": {
         "operationId": "UsersController_login",
+        "summary": "Validate credentials and return the user profile with a signed JWT",
         "parameters": [],
         "requestBody": {
           "required": true,
@@ -71,7 +72,6 @@
             "description": "Invalid email or password"
           }
         },
-        "summary": "Validate credentials and return the user profile with a signed JWT",
         "tags": [
           "Users"
         ]
@@ -80,6 +80,7 @@
     "/courses": {
       "post": {
         "operationId": "CoursesController_create",
+        "summary": "Create a course (teacher only)",
         "parameters": [
           {
             "name": "x-user-timezone",
@@ -140,7 +141,6 @@
             "description": "Caller is not a teacher"
           }
         },
-        "summary": "Create a course (teacher only)",
         "tags": [
           "Courses"
         ]
@@ -149,6 +149,7 @@
     "/courses/mine": {
       "get": {
         "operationId": "CoursesController_findMine",
+        "summary": "List the caller's courses (teacher only)",
         "parameters": [
           {
             "name": "x-user-timezone",
@@ -199,7 +200,6 @@
             "description": "Caller is not a teacher"
           }
         },
-        "summary": "List the caller's courses (teacher only)",
         "tags": [
           "Courses"
         ]
@@ -208,6 +208,7 @@
     "/offerings": {
       "post": {
         "operationId": "OfferingsController_create",
+        "summary": "Create an offering under one of the teacher's courses",
         "parameters": [
           {
             "name": "x-user-timezone",
@@ -271,13 +272,13 @@
             "description": "Course not found"
           }
         },
-        "summary": "Create an offering under one of the teacher's courses",
         "tags": [
           "Offerings"
         ]
       },
       "get": {
         "operationId": "OfferingsController_findAllPublished",
+        "summary": "List all published offerings with sessions in the caller's timezone",
         "parameters": [
           {
             "name": "x-user-timezone",
@@ -325,7 +326,6 @@
             "description": "Missing auth headers"
           }
         },
-        "summary": "List all published offerings with sessions in the caller's timezone",
         "tags": [
           "Offerings"
         ]
@@ -334,6 +334,7 @@
     "/offerings/mine": {
       "get": {
         "operationId": "OfferingsController_findMine",
+        "summary": "List the teacher's own offerings with sessions in the teacher's timezone",
         "parameters": [
           {
             "name": "x-user-timezone",
@@ -381,7 +382,6 @@
             "description": "Missing auth headers"
           }
         },
-        "summary": "List the teacher's own offerings with sessions in the teacher's timezone",
         "tags": [
           "Offerings"
         ]
@@ -390,6 +390,7 @@
     "/offerings/{offeringId}/sessions": {
       "post": {
         "operationId": "SessionsController_addSession",
+        "summary": "Add a session to an offering (times interpreted in teacher's timezone)",
         "parameters": [
           {
             "name": "x-user-timezone",
@@ -466,7 +467,6 @@
             "description": "Session end time before start time, or session is too far in the past"
           }
         },
-        "summary": "Add a session to an offering (times interpreted in teacher's timezone)",
         "tags": [
           "Offerings"
         ]
@@ -475,6 +475,7 @@
     "/bookings": {
       "post": {
         "operationId": "BookingsController_create",
+        "summary": "Book a published offering (parent only)",
         "parameters": [
           {
             "name": "x-user-timezone",
@@ -544,7 +545,6 @@
             "description": "Offering is not published"
           }
         },
-        "summary": "Book a published offering (parent only)",
         "tags": [
           "Bookings"
         ]
@@ -553,6 +553,7 @@
     "/bookings/mine": {
       "get": {
         "operationId": "BookingsController_findMine",
+        "summary": "List the parent's bookings with sessions in the parent's timezone",
         "parameters": [
           {
             "name": "x-user-timezone",
@@ -600,7 +601,6 @@
             "description": "Missing auth headers"
           }
         },
-        "summary": "List the parent's bookings with sessions in the parent's timezone",
         "tags": [
           "Bookings"
         ]
@@ -609,6 +609,7 @@
     "/bookings/{id}/cancel": {
       "patch": {
         "operationId": "BookingsController_cancel",
+        "summary": "Cancel a booking (parent only, idempotent)",
         "parameters": [
           {
             "name": "x-user-timezone",
@@ -662,7 +663,6 @@
             "description": "Booking not found"
           }
         },
-        "summary": "Cancel a booking (parent only, idempotent)",
         "tags": [
           "Bookings"
         ]

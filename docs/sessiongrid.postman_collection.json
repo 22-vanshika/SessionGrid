@@ -8,7 +8,7 @@
   "variable": [
     {
       "key": "baseUrl",
-      "value": "http://localhost:3000",
+      "value": "https://sessiongrid-api.onrender.com",
       "type": "string",
       "description": "Base URL of the running SessionGrid API server"
     }

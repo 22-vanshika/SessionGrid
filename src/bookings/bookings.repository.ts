@@ -49,10 +49,21 @@ export class BookingsRepository {
   // booking row belonging to this parent. Any concurrent transaction that tries
   // to read or modify those rows will block until this transaction commits,
   // preventing double-booking via a race condition.
+  //
+  // An advisory lock keyed on the parent ID is acquired first. This closes the
+  // gap where two concurrent first-time bookings both start with zero existing
+  // rows — SELECT FOR UPDATE on zero rows acquires nothing, so without the
+  // advisory lock both transactions could pass the conflict check simultaneously.
+  // pg_advisory_xact_lock is automatically released when the transaction ends.
   async lockParentBookings(
     parentId: string,
     manager: EntityManager,
   ): Promise<Booking[]> {
+    await manager.query(
+      'SELECT pg_advisory_xact_lock(hashtext($1)::bigint)',
+      [parentId],
+    );
+
     return manager
       .getRepository(Booking)
       .createQueryBuilder('booking')

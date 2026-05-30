@@ -4,6 +4,7 @@ import { Session } from './entities/session.entity';
 import { SessionsRepository } from './sessions.repository';
 import { OfferingsService } from '../offerings/offerings.service';
 import { UserRole } from '../users/entities/user.entity';
+import { DuplicateSessionException } from '../common/exceptions/duplicate-session.exception';
 import { NotATeacherException } from '../common/exceptions/not-a-teacher.exception';
 import { OfferingAccessForbiddenException } from '../common/exceptions/offering-access-forbidden.exception';
 import { SessionTimeInvalidException } from '../common/exceptions/session-time-invalid.exception';
@@ -41,6 +42,16 @@ export class SessionsService {
     // here provides a meaningful error message before hitting the constraint.
     if (endsAt <= startsAt) {
       throw new SessionTimeInvalidException();
+    }
+
+    // Prevent duplicate sessions — same UTC start and end already exist on this offering.
+    const isDuplicate = offering.sessions.some(
+      (s) =>
+        s.startsAt.getTime() === startsAt.getTime() &&
+        s.endsAt.getTime() === endsAt.getTime(),
+    );
+    if (isDuplicate) {
+      throw new DuplicateSessionException();
     }
 
     const saved = await this.sessionsRepository.saveBulk([{ offeringId, startsAt, endsAt }]);

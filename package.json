@@ -10,6 +10,7 @@
     "typeorm": "ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/database/data-source.ts",
     "migration:generate": "npm run typeorm -- migration:generate",
     "migration:run": "npm run typeorm -- migration:run",
+    "migration:run:prod": "node ./node_modules/typeorm/cli.js -d dist/database/data-source.js migration:run",
     "migration:revert": "npm run typeorm -- migration:revert",
     "lint": "eslint \"{src,test}/**/*.ts\"",
     "test": "jest",

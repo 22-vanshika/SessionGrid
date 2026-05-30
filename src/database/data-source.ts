@@ -14,8 +14,8 @@ export const AppDataSource = new DataSource({
   username: process.env['DB_USERNAME'] ?? 'sessiongrid',
   password: process.env['DB_PASSWORD'] ?? 'changeme',
   database: process.env['DB_NAME'] ?? 'sessiongrid',
-  entities: ['src/**/*.entity.ts'],
-  migrations: ['src/database/migrations/*.ts'],
+  entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+  migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
   // synchronize is permanently false — all schema changes go through migrations
   synchronize: false,
 });

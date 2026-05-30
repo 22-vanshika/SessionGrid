@@ -3,6 +3,7 @@ import {
   IsEnum,
   IsNotEmpty,
   IsString,
+  IsTimeZone,
   MaxLength,
   MinLength,
 } from 'class-validator';
@@ -50,6 +51,7 @@ export class RegisterUserDto {
   @Transform(trim)
   @IsString()
   @IsNotEmpty()
+  @IsTimeZone()
   @MaxLength(100)
   timezone: string;
 }

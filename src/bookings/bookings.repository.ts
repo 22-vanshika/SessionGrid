@@ -45,6 +45,17 @@ export class BookingsRepository {
     await this.dataSource.getRepository(Booking).delete({ id });
   }
 
+  // Counts confirmed bookings for an offering inside an active transaction so the
+  // capacity check sees the latest committed count under the existing row-level lock.
+  async countConfirmedByOfferingId(
+    offeringId: string,
+    manager: EntityManager,
+  ): Promise<number> {
+    return manager
+      .getRepository(Booking)
+      .count({ where: { offeringId, status: BookingStatus.CONFIRMED } });
+  }
+
   // Acquires a pessimistic write lock (SELECT … FOR UPDATE) on every confirmed
   // booking row belonging to this parent. Any concurrent transaction that tries
   // to read or modify those rows will block until this transaction commits,

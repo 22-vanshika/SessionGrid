@@ -39,6 +39,10 @@ export class CoursesService {
   }
 
   async findAllByTeacherId(teacherId: string): Promise<Course[]> {
+    const user = await this.usersService.findById(teacherId);
+    if (user.role !== UserRole.TEACHER) {
+      throw new NotATeacherException();
+    }
     return this.coursesRepository.findAllByTeacherId(teacherId);
   }
 }

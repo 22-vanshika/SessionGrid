@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Session } from '../entities/session.entity';
+import { LocalisedSessionResult } from '../sessions.service';
 
 export class SessionResponseDto {
   @ApiProperty({ example: 'b2c3d4e5-f6a7-8901-bcde-f12345678901' })
@@ -9,12 +9,12 @@ export class SessionResponseDto {
   offeringId: string;
 
   @ApiProperty({
-    example: '2024-09-01T09:00:00.000Z',
-    description: 'UTC ISO 8601 string',
+    example: '2024-09-01T14:30:00.000+05:30',
+    description: "Local ISO 8601 string with UTC offset in the teacher's timezone",
   })
   startsAt: string;
 
-  @ApiProperty({ example: '2024-09-01T10:00:00.000Z' })
+  @ApiProperty({ example: '2024-09-01T15:30:00.000+05:30' })
   endsAt: string;
 
   @ApiProperty({ example: '2024-09-01T09:00:00.000Z' })
@@ -23,12 +23,12 @@ export class SessionResponseDto {
   @ApiProperty({ example: '2024-09-01T09:00:00.000Z' })
   updatedAt: Date;
 
-  static fromEntity(session: Session): SessionResponseDto {
+  static fromLocalised(session: LocalisedSessionResult): SessionResponseDto {
     const dto = new SessionResponseDto();
     dto.id = session.id;
     dto.offeringId = session.offeringId;
-    dto.startsAt = session.startsAt.toISOString();
-    dto.endsAt = session.endsAt.toISOString();
+    dto.startsAt = session.startsAt;
+    dto.endsAt = session.endsAt;
     dto.createdAt = session.createdAt;
     dto.updatedAt = session.updatedAt;
     return dto;

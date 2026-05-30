@@ -11,9 +11,11 @@ import { Booking, BookingStatus } from './entities/booking.entity';
 import { BookingsRepository } from './bookings.repository';
 import { BookingAlreadyExistsException } from '../common/exceptions/booking-already-exists.exception';
 import { BookingConflictException } from '../common/exceptions/booking-conflict.exception';
+import { BookingNotFoundException } from '../common/exceptions/booking-not-found.exception';
 import { EmptyOfferingException } from '../common/exceptions/empty-offering.exception';
 import { ForbiddenBookingAccessException } from '../common/exceptions/forbidden-booking-access.exception';
 import { NotAParentException } from '../common/exceptions/not-a-parent.exception';
+import { OfferingFullException } from '../common/exceptions/offering-full.exception';
 import { OfferingNotPublishedException } from '../common/exceptions/offering-not-published.exception';
 
 export interface LocalisedBookingSession {
@@ -54,7 +56,7 @@ export class BookingsService {
     this.assertOfferingIsPublished(offering);
     this.assertOfferingHasSessions(offering);
     const sessionRanges = this.extractSessionRanges(offering.sessions);
-    return this.executeBookingTransaction(parentId, offeringId, sessionRanges);
+    return this.executeBookingTransaction(parentId, offeringId, sessionRanges, offering.capacity);
   }
 
   async findByParentId(parentId: string, parentTimezone: string): Promise<LocalisedBooking[]> {
@@ -65,7 +67,7 @@ export class BookingsService {
   async cancelBooking(bookingId: string, parentId: string): Promise<void> {
     const booking = await this.bookingsRepository.findById(bookingId);
     if (!booking) {
-      return; // idempotent — row was already deleted by a previous cancel
+      throw new BookingNotFoundException(bookingId);
     }
     if (booking.parentId !== parentId) {
       throw new ForbiddenBookingAccessException();
@@ -106,6 +108,7 @@ export class BookingsService {
     parentId: string,
     offeringId: string,
     sessionRanges: Array<{ startsAt: Date; endsAt: Date }>,
+    capacity: number,
   ): Promise<Booking> {
     return this.dataSource.transaction(async (manager: EntityManager) => {
       const existingBookings = await this.bookingsRepository.lockParentBookings(
@@ -115,6 +118,14 @@ export class BookingsService {
 
       if (existingBookings.some((b) => b.offeringId === offeringId)) {
         throw new BookingAlreadyExistsException(offeringId);
+      }
+
+      const confirmedCount = await this.bookingsRepository.countConfirmedByOfferingId(
+        offeringId,
+        manager,
+      );
+      if (confirmedCount >= capacity) {
+        throw new OfferingFullException(offeringId);
       }
 
       const conflicts = await this.bookingsRepository.findConflictingSessions(

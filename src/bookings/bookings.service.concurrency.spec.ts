@@ -154,6 +154,10 @@ describe('BookingsService — concurrency simulation', () => {
         },
       ),
 
+      // Returns 0 so the capacity guard never fires during concurrency tests
+      // (capacity is 10 on both offerings; we are testing conflict detection, not capacity).
+      countConfirmedByOfferingId: jest.fn().mockResolvedValue(0),
+
       // Commits the booking to the shared store — equivalent to a DB INSERT
       // that becomes visible to subsequent transactions after commit.
       save: jest

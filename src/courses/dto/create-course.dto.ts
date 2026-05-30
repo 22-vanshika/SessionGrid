@@ -16,6 +16,7 @@ export class CreateCourseDto {
   @ApiPropertyOptional({ example: 'Introduction to algebra for grades 6–8' })
   @IsOptional()
   @IsString()
+  @IsNotEmpty()
   @MaxLength(2000)
   description?: string;
 }

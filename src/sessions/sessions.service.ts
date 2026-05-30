@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { toUTC } from '../common/utils/timezone.util';
-import { Session } from './entities/session.entity';
+import { toUTC, toLocalISO } from '../common/utils/timezone.util';
 import { SessionsRepository } from './sessions.repository';
 import { OfferingsService } from '../offerings/offerings.service';
 import { UsersService } from '../users/users.service';
@@ -10,6 +9,15 @@ import { NotATeacherException } from '../common/exceptions/not-a-teacher.excepti
 import { OfferingAccessForbiddenException } from '../common/exceptions/offering-access-forbidden.exception';
 import { SessionInPastException } from '../common/exceptions/session-in-past.exception';
 import { SessionTimeInvalidException } from '../common/exceptions/session-time-invalid.exception';
+
+export interface LocalisedSessionResult {
+  id: string;
+  offeringId: string;
+  startsAt: string;
+  endsAt: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 // Sessions more than two years old are considered stale input. This threshold
 // allows historical sessions (e.g. 2024 dates still valid through 2026) while
@@ -34,7 +42,7 @@ export class SessionsService {
     teacherTimezone: string,
     localStartsAt: string,
     localEndsAt: string,
-  ): Promise<Session> {
+  ): Promise<LocalisedSessionResult> {
     const teacher = await this.usersService.findById(teacherId);
     if (teacher.role !== UserRole.TEACHER) {
       throw new NotATeacherException();
@@ -71,6 +79,14 @@ export class SessionsService {
     }
 
     const saved = await this.sessionsRepository.saveBulk([{ offeringId, startsAt, endsAt }]);
-    return saved[0]!;
+    const session = saved[0]!;
+    return {
+      id: session.id,
+      offeringId: session.offeringId,
+      startsAt: toLocalISO(session.startsAt, teacherTimezone),
+      endsAt: toLocalISO(session.endsAt, teacherTimezone),
+      createdAt: session.createdAt,
+      updatedAt: session.updatedAt,
+    };
   }
 }

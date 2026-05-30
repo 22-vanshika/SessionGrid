@@ -1107,12 +1107,12 @@
           },
           "startsAt": {
             "type": "string",
-            "example": "2024-09-01T09:00:00.000Z",
-            "description": "UTC ISO 8601 string"
+            "example": "2024-09-01T14:30:00.000+05:30",
+            "description": "Local ISO 8601 string with UTC offset in the teacher's timezone"
           },
           "endsAt": {
             "type": "string",
-            "example": "2024-09-01T10:00:00.000Z"
+            "example": "2024-09-01T15:30:00.000+05:30"
           },
           "createdAt": {
             "format": "date-time",

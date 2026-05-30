@@ -87,6 +87,10 @@ export class OfferingsService {
     teacherId: string,
     teacherTimezone: string,
   ): Promise<LocalisedOffering[]> {
+    const user = await this.usersService.findById(teacherId);
+    if (user.role !== UserRole.TEACHER) {
+      throw new NotATeacherException();
+    }
     const offerings = await this.offeringsRepository.findAllByTeacherId(teacherId);
     return offerings.map((o) => this.toLocalisedOffering(o, teacherTimezone));
   }

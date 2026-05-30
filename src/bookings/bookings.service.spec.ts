@@ -10,8 +10,11 @@ import { Session } from '../sessions/entities/session.entity';
 import { Booking, BookingStatus } from './entities/booking.entity';
 import { BookingConflictException } from '../common/exceptions/booking-conflict.exception';
 import { BookingAlreadyExistsException } from '../common/exceptions/booking-already-exists.exception';
+import { BookingNotFoundException } from '../common/exceptions/booking-not-found.exception';
+import { ForbiddenBookingAccessException } from '../common/exceptions/forbidden-booking-access.exception';
 import { OfferingNotFoundException } from '../common/exceptions/offering-not-found.exception';
 import { OfferingNotPublishedException } from '../common/exceptions/offering-not-published.exception';
+import { OfferingFullException } from '../common/exceptions/offering-full.exception';
 import { NotAParentException } from '../common/exceptions/not-a-parent.exception';
 
 // ---------------------------------------------------------------------------
@@ -83,8 +86,10 @@ type MockBookingsRepository = jest.Mocked<
     BookingsRepository,
     | 'lockParentBookings'
     | 'findConflictingSessions'
+    | 'countConfirmedByOfferingId'
     | 'save'
     | 'findById'
+    | 'deleteById'
     | 'findByParentId'
     | 'updateStatus'
   >
@@ -93,8 +98,10 @@ type MockBookingsRepository = jest.Mocked<
 const buildMockBookingsRepository = (): MockBookingsRepository => ({
   lockParentBookings: jest.fn(),
   findConflictingSessions: jest.fn(),
+  countConfirmedByOfferingId: jest.fn(),
   save: jest.fn(),
   findById: jest.fn(),
+  deleteById: jest.fn(),
   findByParentId: jest.fn(),
   updateStatus: jest.fn(),
 });
@@ -152,6 +159,7 @@ describe('BookingsService.bookOffering', () => {
     // Repository happy-path defaults.
     mockBookingsRepo.lockParentBookings.mockResolvedValue([]);
     mockBookingsRepo.findConflictingSessions.mockResolvedValue([]);
+    mockBookingsRepo.countConfirmedByOfferingId.mockResolvedValue(0);
     mockBookingsRepo.save.mockResolvedValue(savedBooking);
   });
 
@@ -191,6 +199,19 @@ describe('BookingsService.bookOffering', () => {
 
     await expect(service.bookOffering(PARENT_ID, OFFERING_ID)).rejects.toThrow(
       OfferingNotPublishedException,
+    );
+  });
+
+  // --------------------------------------------------------------------------
+  // Capacity guard
+  // --------------------------------------------------------------------------
+
+  it('throws OfferingFullException when confirmed bookings equal capacity', async () => {
+    // capacity is 10 (from mockPublishedOffering); mock returns 10 confirmed bookings.
+    mockBookingsRepo.countConfirmedByOfferingId.mockResolvedValue(10);
+
+    await expect(service.bookOffering(PARENT_ID, OFFERING_ID)).rejects.toThrow(
+      OfferingFullException,
     );
   });
 
@@ -260,5 +281,58 @@ describe('BookingsService.bookOffering', () => {
     expect(callOrder.indexOf('lockParentBookings')).toBeLessThan(
       callOrder.indexOf('findConflictingSessions'),
     );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// cancelBooking
+// ---------------------------------------------------------------------------
+
+describe('BookingsService.cancelBooking', () => {
+  let service: BookingsService;
+  let mockBookingsRepo: MockBookingsRepository;
+
+  beforeEach(async () => {
+    mockBookingsRepo = buildMockBookingsRepository();
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        BookingsService,
+        { provide: BookingsRepository, useValue: mockBookingsRepo },
+        { provide: UsersService, useValue: { findById: jest.fn() } },
+        { provide: OfferingsService, useValue: { findByIdWithSessions: jest.fn() } },
+        { provide: DataSource, useValue: { transaction: jest.fn() } },
+      ],
+    }).compile();
+
+    service = module.get<BookingsService>(BookingsService);
+  });
+
+  it('throws BookingNotFoundException when the booking does not exist', async () => {
+    mockBookingsRepo.findById.mockResolvedValue(null);
+
+    await expect(service.cancelBooking(BOOKING_ID, PARENT_ID)).rejects.toThrow(
+      BookingNotFoundException,
+    );
+  });
+
+  it('throws ForbiddenBookingAccessException when the booking belongs to a different parent', async () => {
+    mockBookingsRepo.findById.mockResolvedValue({
+      ...savedBooking,
+      parentId: 'other-parent-uuid',
+    });
+
+    await expect(service.cancelBooking(BOOKING_ID, PARENT_ID)).rejects.toThrow(
+      ForbiddenBookingAccessException,
+    );
+  });
+
+  it('calls deleteById when the booking belongs to the authenticated parent', async () => {
+    mockBookingsRepo.findById.mockResolvedValue(savedBooking);
+    mockBookingsRepo.deleteById.mockResolvedValue(undefined);
+
+    await service.cancelBooking(BOOKING_ID, PARENT_ID);
+
+    expect(mockBookingsRepo.deleteById).toHaveBeenCalledWith(BOOKING_ID);
   });
 });

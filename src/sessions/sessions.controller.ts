@@ -46,6 +46,6 @@ export class SessionsController {
       dto.startsAt,
       dto.endsAt,
     );
-    return SessionResponseDto.fromEntity(session);
+    return SessionResponseDto.fromLocalised(session);
   }
 }

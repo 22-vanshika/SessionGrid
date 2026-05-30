@@ -50,6 +50,16 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     if (exception instanceof QueryFailedError) {
       return this.handleQueryFailedError(exception, request);
     }
+    // Express body-parser throws a SyntaxError with status 400 when the request
+    // body is not valid JSON. Surfacing this as 500 would be misleading — it is
+    // always a client mistake, so we return 400 with a stable error code.
+    if (exception instanceof SyntaxError) {
+      return {
+        statusCode: HttpStatus.BAD_REQUEST,
+        error: 'BAD_REQUEST',
+        message: 'Request body contains invalid JSON',
+      };
+    }
     return this.handleUnknownException(exception, request);
   }
 

@@ -7,6 +7,17 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
   constructor(private readonly configService: ConfigService) {}
 
   createTypeOrmOptions(): TypeOrmModuleOptions {
+    const url = this.configService.get<string>('DATABASE_URL');
+    if (url) {
+      return {
+        type: 'postgres',
+        url,
+        entities: [__dirname + '/../**/*.entity{.ts,.js}'],
+        migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
+        synchronize: false,
+        logging: this.configService.get<string>('NODE_ENV') === 'development',
+      };
+    }
     return {
       type: 'postgres',
       host: this.configService.getOrThrow<string>('DB_HOST'),
@@ -16,7 +27,6 @@ export class DatabaseConfig implements TypeOrmOptionsFactory {
       database: this.configService.getOrThrow<string>('DB_NAME'),
       entities: [__dirname + '/../**/*.entity{.ts,.js}'],
       migrations: [__dirname + '/../database/migrations/*{.ts,.js}'],
-      // synchronize is permanently false — all schema changes go through migrations
       synchronize: false,
       logging: this.configService.get<string>('NODE_ENV') === 'development',
     };

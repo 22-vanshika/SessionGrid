@@ -4,8 +4,9 @@
 > classes and parents book spots — and the system guarantees no two parents can ever
 > accidentally get the same slot at the same time.
 
-🚀 **Live Production API**: [https://sessiongrid-api.onrender.com](https://sessiongrid-api.onrender.com)  
-📖 **Interactive Swagger UI**: [https://sessiongrid-api.onrender.com/api/docs](https://sessiongrid-api.onrender.com/api/docs)
+🚀 **Live API** → [sessiongrid-api.onrender.com](https://sessiongrid-api.onrender.com)  
+📖 **Swagger UI** → [sessiongrid-api.onrender.com/api/docs](https://sessiongrid-api.onrender.com/api/docs)  
+🖥 **Frontend Demo** → [session-grid-frontend.vercel.app](https://session-grid-frontend.vercel.app)
 
 ---
 

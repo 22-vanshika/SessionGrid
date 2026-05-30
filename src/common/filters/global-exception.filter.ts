@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
+import { QueryFailedError } from 'typeorm';
 
 interface ErrorResponseBody {
   statusCode: number;
@@ -15,6 +16,11 @@ interface ErrorResponseBody {
   timestamp: string;
   path: string;
 }
+
+// PostgreSQL error codes we handle explicitly so clients receive a meaningful
+// HTTP response instead of a generic 500.
+const PG_FOREIGN_KEY_VIOLATION = '23503';
+const PG_UNIQUE_VIOLATION = '23505';
 
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
@@ -25,16 +31,26 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
-    const body =
-      exception instanceof HttpException
-        ? this.handleHttpException(exception)
-        : this.handleUnknownException(exception, request);
+    const body = this.classify(exception, request);
 
     response.status(body.statusCode).json({
       ...body,
       timestamp: new Date().toISOString(),
       path: request.url,
     });
+  }
+
+  private classify(
+    exception: unknown,
+    request: Request,
+  ): Omit<ErrorResponseBody, 'timestamp' | 'path'> {
+    if (exception instanceof HttpException) {
+      return this.handleHttpException(exception);
+    }
+    if (exception instanceof QueryFailedError) {
+      return this.handleQueryFailedError(exception, request);
+    }
+    return this.handleUnknownException(exception, request);
   }
 
   private handleHttpException(
@@ -63,6 +79,45 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         typeof rawMessage === 'string'
           ? rawMessage
           : String(rawMessage ?? 'An error occurred'),
+    };
+  }
+
+  private handleQueryFailedError(
+    exception: QueryFailedError,
+    request: Request,
+  ): Omit<ErrorResponseBody, 'timestamp' | 'path'> {
+    const pgCode = (exception as QueryFailedError & { driverError?: { code?: string } })
+      .driverError?.code;
+
+    if (pgCode === PG_FOREIGN_KEY_VIOLATION) {
+      // A referenced row (e.g. the offering) was deleted between the application
+      // check and the INSERT. Return 409 so the client knows to re-fetch state.
+      return {
+        statusCode: HttpStatus.CONFLICT,
+        error: 'REFERENCED_RESOURCE_NOT_FOUND',
+        message: 'A referenced resource no longer exists; please refresh and try again',
+      };
+    }
+
+    if (pgCode === PG_UNIQUE_VIOLATION) {
+      // The DB unique constraint fired after the application-level duplicate check
+      // was passed (lost-update race). Treat it as a conflict.
+      return {
+        statusCode: HttpStatus.CONFLICT,
+        error: 'UNIQUE_CONSTRAINT_VIOLATION',
+        message: 'A record with these values already exists',
+      };
+    }
+
+    // Other database errors — log full detail server-side, return generic 500.
+    this.logger.error(
+      `Database error on ${request.method} ${request.url}`,
+      exception.stack,
+    );
+    return {
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      error: 'INTERNAL_SERVER_ERROR',
+      message: 'Internal server error',
     };
   }
 

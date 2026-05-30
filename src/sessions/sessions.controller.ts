@@ -42,7 +42,6 @@ export class SessionsController {
     const session = await this.sessionsService.addToOffering(
       offeringId,
       currentUser.id,
-      currentUser.role,
       currentUser.timezone,
       dto.startsAt,
       dto.endsAt,

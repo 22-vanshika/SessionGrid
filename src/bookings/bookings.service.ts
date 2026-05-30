@@ -11,6 +11,7 @@ import { Booking, BookingStatus } from './entities/booking.entity';
 import { BookingsRepository } from './bookings.repository';
 import { BookingAlreadyExistsException } from '../common/exceptions/booking-already-exists.exception';
 import { BookingConflictException } from '../common/exceptions/booking-conflict.exception';
+import { EmptyOfferingException } from '../common/exceptions/empty-offering.exception';
 import { ForbiddenBookingAccessException } from '../common/exceptions/forbidden-booking-access.exception';
 import { NotAParentException } from '../common/exceptions/not-a-parent.exception';
 import { OfferingNotPublishedException } from '../common/exceptions/offering-not-published.exception';
@@ -51,6 +52,7 @@ export class BookingsService {
     await this.assertParentRole(parentId);
     const offering = await this.offeringsService.findByIdWithSessions(offeringId);
     this.assertOfferingIsPublished(offering);
+    this.assertOfferingHasSessions(offering);
     const sessionRanges = this.extractSessionRanges(offering.sessions);
     return this.executeBookingTransaction(parentId, offeringId, sessionRanges);
   }
@@ -81,6 +83,12 @@ export class BookingsService {
   private assertOfferingIsPublished(offering: Offering): void {
     if (offering.status !== OfferingStatus.PUBLISHED) {
       throw new OfferingNotPublishedException(offering.id);
+    }
+  }
+
+  private assertOfferingHasSessions(offering: Offering): void {
+    if (offering.sessions.length === 0) {
+      throw new EmptyOfferingException(offering.id);
     }
   }
 

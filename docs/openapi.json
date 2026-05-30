@@ -59,7 +59,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/UserResponseDto"
+                  "$ref": "#/components/schemas/LoginResponseDto"
                 }
               }
             }
@@ -71,7 +71,7 @@
             "description": "Invalid email or password"
           }
         },
-        "summary": "Validate credentials and return the user profile",
+        "summary": "Validate credentials and return the user profile with a signed JWT",
         "tags": [
           "Users"
         ]
@@ -804,6 +804,23 @@
         "required": [
           "email",
           "password"
+        ]
+      },
+      "LoginResponseDto": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string",
+            "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI...",
+            "description": "HS256-signed JWT. Pass as Authorization: Bearer <token> on protected routes."
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserResponseDto"
+          }
+        },
+        "required": [
+          "accessToken",
+          "user"
         ]
       },
       "CreateCourseDto": {

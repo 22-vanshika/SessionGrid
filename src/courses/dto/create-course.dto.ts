@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString, MaxLength } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -10,10 +10,12 @@ export class CreateCourseDto {
   @Transform(trim)
   @IsString()
   @IsNotEmpty()
+  @MaxLength(255)
   title: string;
 
   @ApiPropertyOptional({ example: 'Introduction to algebra for grades 6–8' })
   @IsOptional()
   @IsString()
+  @MaxLength(2000)
   description?: string;
 }

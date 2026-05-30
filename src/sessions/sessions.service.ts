@@ -3,30 +3,40 @@ import { toUTC } from '../common/utils/timezone.util';
 import { Session } from './entities/session.entity';
 import { SessionsRepository } from './sessions.repository';
 import { OfferingsService } from '../offerings/offerings.service';
+import { UsersService } from '../users/users.service';
 import { UserRole } from '../users/entities/user.entity';
 import { DuplicateSessionException } from '../common/exceptions/duplicate-session.exception';
 import { NotATeacherException } from '../common/exceptions/not-a-teacher.exception';
 import { OfferingAccessForbiddenException } from '../common/exceptions/offering-access-forbidden.exception';
+import { SessionInPastException } from '../common/exceptions/session-in-past.exception';
 import { SessionTimeInvalidException } from '../common/exceptions/session-time-invalid.exception';
+
+// Sessions more than two years old are considered stale input. This threshold
+// allows historical sessions (e.g. 2024 dates still valid through 2026) while
+// preventing obviously erroneous entries like year-2000 timestamps.
+const SESSION_MAX_PAST_YEARS = 2;
 
 @Injectable()
 export class SessionsService {
   constructor(
     private readonly sessionsRepository: SessionsRepository,
     private readonly offeringsService: OfferingsService,
+    private readonly usersService: UsersService,
   ) {}
 
-  // teacherTimezone is read from the authenticated teacher's profile by the controller
+  // teacherTimezone is read from the x-user-timezone header by the controller
   // and passed here. Local times are interpreted in that timezone before UTC storage.
+  // The teacher's role is verified against the database, not the header, to match
+  // the pattern used by CoursesService and OfferingsService.
   async addToOffering(
     offeringId: string,
     teacherId: string,
-    teacherRole: UserRole,
     teacherTimezone: string,
     localStartsAt: string,
     localEndsAt: string,
   ): Promise<Session> {
-    if (teacherRole !== UserRole.TEACHER) {
+    const teacher = await this.usersService.findById(teacherId);
+    if (teacher.role !== UserRole.TEACHER) {
       throw new NotATeacherException();
     }
     const offering = await this.offeringsService.findByIdWithSessions(offeringId);
@@ -42,6 +52,12 @@ export class SessionsService {
     // here provides a meaningful error message before hitting the constraint.
     if (endsAt <= startsAt) {
       throw new SessionTimeInvalidException();
+    }
+
+    const pastCutoff = new Date();
+    pastCutoff.setFullYear(pastCutoff.getFullYear() - SESSION_MAX_PAST_YEARS);
+    if (startsAt < pastCutoff) {
+      throw new SessionInPastException();
     }
 
     // Prevent duplicate sessions — same UTC start and end already exist on this offering.

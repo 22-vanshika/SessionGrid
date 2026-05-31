@@ -4,7 +4,8 @@
 > classes and parents book spots — and the system guarantees no two parents can ever
 > accidentally get the same slot at the same time.
 
-🚀 **Live API** → [sessiongrid-api.onrender.com](https://sessiongrid-api.onrender.com)  
+� **Demo Link** → [Google Drive Demo](https://drive.google.com/drive/folders/1404Qzm9hW_qWNc0-gz9E0Y-7QUjrlJE6)  
+�🚀 **Live API** → [sessiongrid-api.onrender.com](https://sessiongrid-api.onrender.com)  
 📖 **Swagger UI** → [sessiongrid-api.onrender.com/api/docs](https://sessiongrid-api.onrender.com/api/docs)  
 🖥 **Frontend Demo** → [session-grid-frontend.vercel.app](https://session-grid-frontend.vercel.app)
 
@@ -96,18 +97,22 @@ src/
 ## 5. Setup — Get It Running in 3 Steps 🚀
 
 **Step 1 — Copy your config file**
+
 ```bash
 cp .env.example .env
 ```
+
 What just happened: Created `.env` with every setting the app needs. Defaults work as-is.
 ✅ Worked if: `.env` exists in the project root.
 
 ---
 
 **Step 2 — Start the database, install packages, and build the tables**
+
 ```bash
 docker-compose up -d && npm install && npm run migration:run
 ```
+
 What just happened: Docker started PostgreSQL in the background. `npm install` fetched all
 libraries. `migration:run` created 5 tables using versioned files (no `synchronize: true`).
 ✅ Worked if: `docker ps` shows a running container and terminal prints
@@ -116,9 +121,11 @@ libraries. `migration:run` created 5 tables using versioned files (no `synchroni
 ---
 
 **Step 3 — Start the API server**
+
 ```bash
 npm run start:dev
 ```
+
 What just happened: NestJS started in watch mode — restarts automatically on file changes.
 ✅ Worked if: you see `Application is running on: http://localhost:3000`.
 
@@ -418,11 +425,11 @@ Two ready-to-use files live in the `docs/` folder:
 
 SessionGrid is fully deployed, configured, and running live in the cloud.
 
-* **Live API Base URL**: `https://sessiongrid-api.onrender.com`
-* **Interactive API Documentation (Swagger)**: `https://sessiongrid-api.onrender.com/api/docs`
+- **Live API Base URL**: `https://sessiongrid-api.onrender.com`
+- **Interactive API Documentation (Swagger)**: `https://sessiongrid-api.onrender.com/api/docs`
 
 ### **Production Infrastructure Architecture:**
-* **Web Service**: Node.js/NestJS hosted on Render. Uses dynamic peer dependency checks and production-safe migrations compiled directly to native JavaScript.
-* **Database**: Managed PostgreSQL instance (v16) hosted on Render. Supports unified secure `DATABASE_URL` connections, preventing connection leaks.
-* **Continuous Integration**: Managed via GitHub actions and auto-deployed directly to Render on every push to the `main` branch.
 
+- **Web Service**: Node.js/NestJS hosted on Render. Uses dynamic peer dependency checks and production-safe migrations compiled directly to native JavaScript.
+- **Database**: Managed PostgreSQL instance (v16) hosted on Render. Supports unified secure `DATABASE_URL` connections, preventing connection leaks.
+- **Continuous Integration**: Managed via GitHub actions and auto-deployed directly to Render on every push to the `main` branch.
